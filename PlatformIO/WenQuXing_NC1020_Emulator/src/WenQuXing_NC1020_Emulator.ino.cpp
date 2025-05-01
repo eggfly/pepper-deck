@@ -1,3 +1,6 @@
+# 1 "/var/folders/8x/lx7fqmm923542qcqqsx73vvm0000gn/T/tmprro8vcbc"
+#include <Arduino.h>
+# 1 "/Users/eggfly/github/eggfly/pepper-deck/PlatformIO/WenQuXing_NC1020_Emulator/src/WenQuXing_NC1020_Emulator.ino"
 #include <Arduino.h>
 
 #include "esp_clk.h"
@@ -41,16 +44,9 @@ const bool APP_DEBUG = false;
 #define I2S_BCLK 16
 #define I2S_LRCK 15
 
-// use 12 bit precission for LEDC timer
+
 #define LEDC_TIMER_12_BIT 12
-
-// SPIClass fspi(FSPI);
-// SPIClass vspi(VSPI); // only ESP32
-// SPIClass hspi(HSPI);
-// FSPI is already used to send screen data.
-
-// GFXcanvas1 canvas(SCREEN_WIDTH, SCREEN_HEIGHT);
-
+# 54 "/Users/eggfly/github/eggfly/pepper-deck/PlatformIO/WenQuXing_NC1020_Emulator/src/WenQuXing_NC1020_Emulator.ino"
 uint32_t chipId = 0;
 
 void listDir(fs::FS &fs, const char *dirname, uint8_t levels)
@@ -98,7 +94,35 @@ int d0 = 12;
 int d1 = 11;
 int d2 = 10;
 int d3 = 9;
-
+bool SD_Init();
+void NC1020_Init();
+void set_backlight_level();
+int strncmpci(const char *str1, const char *str2, size_t num);
+bool startsWithIgnoreCase(const char *pre, const char *str);
+bool endsWithIgnoreCase(const char *base, const char *str);
+void populateMusicFileList(String path, size_t depth);
+void autoPlayNextSong();
+void clearSongInfo();
+void startNextSong(bool isNextOrPrev);
+void volumeUp();
+void volumeDown();
+void setup();
+void anotherCoreTask(void *parameter);
+void gfx_demo();
+void pixelScale(uint8_t *src, uint8_t *dest);
+void pixelScale2(uint8_t *src, uint8_t *dest);
+void sprintfBinary(uint8_t num, char *buf);
+void enlargeBuffer(uint8_t *src, uint8_t *dest);
+void magnify_pixels(uint8_t *src, uint8_t *dest);
+void my_lcd_zoom_in(uint8_t *src, uint8_t *dest);
+inline void drawMouse();
+inline void nc1020_loop();
+void loop();
+void handle_backlight_key();
+void show_restart();
+void select_boot_item(int8_t offset);
+bool keyboard_callback(const char *key_str);
+#line 102 "/Users/eggfly/github/eggfly/pepper-deck/PlatformIO/WenQuXing_NC1020_Emulator/src/WenQuXing_NC1020_Emulator.ino"
 bool SD_Init()
 {
   if (!SD_MMC.setPins(clk, cmd, d0, d1, d2, d3))
@@ -152,16 +176,16 @@ bool SD_Init()
 
 QueueHandle_t g_event_queue_handle = NULL;
 
-// 160 * 80 / 8
+
 uint8_t lcd_buff[1600];
 
-// 320 * 160 / 8
+
 uint8_t *lcd_buff_expanded;
 
 uint8_t my_buff[0x8000];
 
-// std::map<char, uint8_t> cardkb_to_nc1020_keymap;
-// bool cardkb_to_nc1020_keymap_initialized = false;
+
+
 
 std::map<std::string, uint8_t> nc1020_keymap = {
     {"A", 0x28},
@@ -192,74 +216,22 @@ std::map<std::string, uint8_t> nc1020_keymap = {
     {"Z", 0x30},
     {"Enter", 0x1d},
     {"Backspace", 0x3b},
-    {"F1", 0x1a}, // UP
-    {"F2", 0x1b}, // DOWN
-    {"F3", 0x3f}, // LEFT
-    {"F4", 0x1f}, // RIGHT
-    {"P1", 0x0b}, // 英汉
-    {"P2", 0x0c}, // 名片
-    {"P3", 0x0d}, // 计算
-    {"P4", 0x0a}, // 行程
-    {"P5", 0x09}, // 测验
-    {"P6", 0x08}, // 其他
-    {"P7", 0x0e}, // 网络
+    {"F1", 0x1a},
+    {"F2", 0x1b},
+    {"F3", 0x3f},
+    {"F4", 0x1f},
+    {"P1", 0x0b},
+    {"P2", 0x0c},
+    {"P3", 0x0d},
+    {"P4", 0x0a},
+    {"P5", 0x09},
+    {"P6", 0x08},
+    {"P7", 0x0e},
 };
-
-// void nc1020_keymap_init()
-// {
-//   if (cardkb_to_nc1020_keymap_initialized)
-//   {
-//     return;
-//   }
-//   cardkb_to_nc1020_keymap_initialized = true;
-//   cardkb_to_nc1020_keymap['1'] = 0x0B;  //"英汉"
-//   cardkb_to_nc1020_keymap['2'] = 0x0C;  //"名片"
-//   cardkb_to_nc1020_keymap['3'] = 0x0D;  //"计算"
-//   cardkb_to_nc1020_keymap['4'] = 0x0A;  //"行程"
-//   cardkb_to_nc1020_keymap['5'] = 0x09;  //"测验"
-//   cardkb_to_nc1020_keymap['6'] = 0x08;  //"其他"
-//   cardkb_to_nc1020_keymap['7'] = 0x0E;  //"网络"
-//   cardkb_to_nc1020_keymap[0x0d] = 0x1D; // ENTER
-//   cardkb_to_nc1020_keymap[0x1b] = 0x3B; // ESC
-
-//   cardkb_to_nc1020_keymap[0xb5] = 0x1A; // UP
-//   cardkb_to_nc1020_keymap[0xb6] = 0x1B; // DOWN
-//   cardkb_to_nc1020_keymap[0xb4] = 0x3F; // LEFT
-//   cardkb_to_nc1020_keymap[0xb7] = 0x1F; // RIGHT
-//   cardkb_to_nc1020_keymap[0x99] = 0x37; // PAGE UP
-//   cardkb_to_nc1020_keymap[0xa4] = 0x1E; // PAGE DOWN
-
-//   cardkb_to_nc1020_keymap['a'] = 0x28;
-//   cardkb_to_nc1020_keymap['b'] = 0x34;
-//   cardkb_to_nc1020_keymap['c'] = 0x32;
-//   cardkb_to_nc1020_keymap['d'] = 0x2A;
-//   cardkb_to_nc1020_keymap['e'] = 0x22;
-//   cardkb_to_nc1020_keymap['f'] = 0x2B;
-//   cardkb_to_nc1020_keymap['g'] = 0x2C;
-//   cardkb_to_nc1020_keymap['h'] = 0x2D;
-//   cardkb_to_nc1020_keymap['i'] = 0x27;
-//   cardkb_to_nc1020_keymap['j'] = 0x2E;
-//   cardkb_to_nc1020_keymap['k'] = 0x2F;
-//   cardkb_to_nc1020_keymap['l'] = 0x19;
-//   cardkb_to_nc1020_keymap['m'] = 0x36;
-//   cardkb_to_nc1020_keymap['n'] = 0x35;
-//   cardkb_to_nc1020_keymap['o'] = 0x18;
-//   cardkb_to_nc1020_keymap['p'] = 0x1C;
-//   cardkb_to_nc1020_keymap['q'] = 0x20;
-//   cardkb_to_nc1020_keymap['r'] = 0x23;
-//   cardkb_to_nc1020_keymap['s'] = 0x29;
-//   cardkb_to_nc1020_keymap['t'] = 0x24;
-//   cardkb_to_nc1020_keymap['u'] = 0x26;
-//   cardkb_to_nc1020_keymap['v'] = 0x33;
-//   cardkb_to_nc1020_keymap['w'] = 0x21;
-//   cardkb_to_nc1020_keymap['x'] = 0x31;
-//   cardkb_to_nc1020_keymap['y'] = 0x25;
-//   cardkb_to_nc1020_keymap['z'] = 0x30;
-// }
-
+# 260 "/Users/eggfly/github/eggfly/pepper-deck/PlatformIO/WenQuXing_NC1020_Emulator/src/WenQuXing_NC1020_Emulator.ino"
 void NC1020_Init()
 {
-  // nc1020_keymap_init();
+
   auto freq = getCpuFrequencyMhz();
   Serial.printf("cpu freq=%dMHz\n", freq);
 
@@ -472,9 +444,9 @@ void startNextSong(bool isNextOrPrev)
       m_activeSongIdx = random(m_songFiles.size());
     } while (m_played_songs.find(m_activeSongIdx) != std::end(m_played_songs));
   }
-  //  if (m_activeSongIdx >= m_songFiles.size() || m_activeSongIdx < 0) {
-  //    m_activeSongIdx = 0;
-  //  }
+
+
+
   m_activeSongIdx %= m_songFiles.size();
   Serial.print("songIndex=");
   Serial.print(m_activeSongIdx);
@@ -486,11 +458,11 @@ void startNextSong(bool isNextOrPrev)
     audio.stopSong();
   }
   clearSongInfo();
-  // new_fft_pos = NEW_SPECTRUM_DISPLAY_HISTORY;
-  // TODO: FIX
-  // audio.connecttoSD(m_songFiles[m_activeSongIdx].c_str());
 
-  // drawScreen();
+
+
+
+
   Serial.println(m_songFiles[m_activeSongIdx].c_str());
 }
 
@@ -501,7 +473,7 @@ void volumeUp()
   if (volume < 21)
   {
     volume++;
-    audio.setVolume(volume); // 0...21
+    audio.setVolume(volume);
   }
 }
 
@@ -510,11 +482,11 @@ void volumeDown()
   if (volume > 0)
   {
     volume--;
-    audio.setVolume(volume); // 0...21
+    audio.setVolume(volume);
   }
   else
   {
-    // volume == 0;
+
   }
 }
 
@@ -524,8 +496,8 @@ public:
   void initPage()
   {
     audio.setPinout(I2S_BCLK, I2S_LRCK, I2S_DOUT);
-    audio.setVolume(volume);       // 0...21
-    populateMusicFileList("/", 1); // depth = 1
+    audio.setVolume(volume);
+    populateMusicFileList("/", 1);
     Serial.print("MusicFileList length: ");
     Serial.println(m_songFiles.size());
   }
@@ -607,8 +579,8 @@ public:
   bool handleKey(const char *key_str)
   {
     std::string str(key_str);
-    // TODO: FIX
-    // nc1020_keymap[]
+
+
     char c = '\n';
     xQueueSend(g_event_queue_handle, &c, portMAX_DELAY);
     Serial.printf("xQueueSend, key=0x%02x\n", c);
@@ -620,17 +592,17 @@ void setup()
 {
   Serial.begin(115200);
   usb_hid_setup();
-  // rtc_cpu_freq_config_t config;
-  // rtc_clk_cpu_freq_get_config(&config);
-  // Serial.printf("Current CPU Freq: %u MHz\n", config.freq_mhz);
-  // config.freq_mhz = 80;
-  // rtc_clk_cpu_freq_set_config(&config);
+
+
+
+
+
   Serial.printf("Current CPU Freq: %u MHz\n", ESP.getCpuFreqMHz());
 
   initScreen();
   keyboard_setup();
   battery_setup();
-  // initScreenWaves();
+
   menu_pages[0] = new ConsolePage();
   menu_pages[1] = new WenQuXingPage();
   menu_pages[2] = new MusicPlayerPage();
@@ -638,7 +610,7 @@ void setup()
   menu_pages[4] = new ConsolePage();
   menu_pages[5] = new ConsolePage();
   menu_pages[6] = new ConsolePage();
-  // TODO: FIX
+
   currPage = menu_pages[1];
 
   if (!SD_Init())
@@ -652,15 +624,7 @@ void setup()
   Serial.print("setup() running on core ");
   Serial.println(xPortGetCoreID());
   auto anotherCoreId = coreId ? 0 : 1;
-
-  //  xTaskCreatePinnedToCore(
-  //    anotherCoreTask, /* Function to implement the task */
-  //    "another", /* Name of the task */
-  //    10000,  /* Stack size in words */
-  //    NULL,  /* Task input parameter */
-  //    0,  /* Priority of the task */
-  //    &anotherCoreTaskHandle,  /* Task handle. */
-  //    anotherCoreId); /* Core where the task should run */
+# 664 "/Users/eggfly/github/eggfly/pepper-deck/PlatformIO/WenQuXing_NC1020_Emulator/src/WenQuXing_NC1020_Emulator.ino"
 }
 
 SPIClass *fspi = NULL;
@@ -668,26 +632,16 @@ static const int spiClk = 40000000;
 
 void anotherCoreTask(void *parameter)
 {
-  // Run SPI sending screen data lopp
+
   Serial.print("anotherCoreTask running on core ");
   Serial.println(xPortGetCoreID());
 
   for (;;)
   {
     portENTER_CRITICAL(&my_mutex);
-    //    memcpy(spi_master_tx_buf, canvas.getBuffer(), 19200);
-    //    // Serial.println("tx/rx");
-    //
-    //    digitalWrite(fspi->pinSS(), LOW);
-    //    fspi->beginTransaction(SPISettings(spiClk, MSBFIRST, SPI_MODE0));
-    //    fspi->transferBytes(spi_master_tx_buf, spi_master_rx_buf, 19200);
-    //    // fspi->writeBytes(spi_master_tx_buf, 19200);
-    //    fspi->endTransaction();
-    //    digitalWrite(fspi->pinSS(), HIGH);
-    //    portEXIT_CRITICAL(&my_mutex);
-    //    spi_keyboard_handle_loop();
+# 689 "/Users/eggfly/github/eggfly/pepper-deck/PlatformIO/WenQuXing_NC1020_Emulator/src/WenQuXing_NC1020_Emulator.ino"
     delayMicroseconds(10);
-    // spi_master_loop();
+
   }
 }
 
@@ -702,7 +656,7 @@ void grub_loader_menu()
   canvas.setTextSize(3);
   canvas.println("----- GNU GRUB v2.02 -----");
   canvas.setTextSize(2);
-  // canvas.println("   on ESP32-S3 N16R8");
+
   canvas.println();
   canvas.println();
   for (size_t i = 0; i < menu_items_count; i++)
@@ -732,15 +686,7 @@ void gfx_demo()
 {
   portENTER_CRITICAL(&my_mutex);
   canvas.fillScreen(0);
-  //  canvas.setRotation(0);
-  //  canvas.writeFastHLine(0, 0, 9, 1);
-  //  canvas.setRotation(1);
-  //  canvas.writeFastHLine(0, 0, 9, 1);
-  //  canvas.setRotation(2);
-  //  canvas.writeFastHLine(0, 0, 9, 1);
-  //  canvas.setRotation(3);
-  //  canvas.writeFastHLine(0, 0, 9, 1);
-  //  canvas.setRotation(1);
+# 744 "/Users/eggfly/github/eggfly/pepper-deck/PlatformIO/WenQuXing_NC1020_Emulator/src/WenQuXing_NC1020_Emulator.ino"
   canvas.fillRect(400, 1, 10, 10, 1);
 
   canvas.setCursor(0, 0);
@@ -753,32 +699,32 @@ void gfx_demo()
   canvas.print(screen_str.c_str());
 
   portEXIT_CRITICAL(&my_mutex);
-  //  Serial.println("\nThe GFXcanvas1 raw content after drawing a fast horizontal "
-  //                 "line in each rotation:\n");
+
+
 }
 
 void pixelScale(uint8_t *src, uint8_t *dest)
 {
-  // 像素放大倍数
+
   const int scale = 2;
 
-  // 源数组每行像素个数
+
   const int srcPitch = 160 / 8;
 
-  // 目标数组每行像素个数
+
   const int destPitch = 320 / 8;
 
-  // 遍历源数组每个像素
+
   for (int y = 0; y < 80; y++)
   {
     for (int x = 0; x < srcPitch; x++)
     {
       uint8_t pixel = src[y * srcPitch + x];
 
-      // 像素扩展为2x2的小格子
+
       uint8_t expandedPixel = (pixel << 4) | pixel;
 
-      // 写入目标数组
+
       dest[y * 2 * destPitch + 2 * x] = expandedPixel;
       dest[y * 2 * destPitch + 2 * x + 1] = expandedPixel;
       dest[(y * 2 + 1) * destPitch + 2 * x] = expandedPixel;
@@ -788,26 +734,26 @@ void pixelScale(uint8_t *src, uint8_t *dest)
 }
 void pixelScale2(uint8_t *src, uint8_t *dest)
 {
-  // 像素放大倍数
+
   const int scale = 2;
 
-  // 源数组每行像素个数
+
   const int srcPitch = 160 / 8;
 
-  // 目标数组每行像素个数
+
   const int destPitch = 320 / 8;
 
-  // 遍历源数组每个像素
+
   for (int y = 0; y < 80; y++)
   {
     for (int x = 0; x < srcPitch; x++)
     {
       uint8_t pixel = src[y * srcPitch + x];
 
-      // 像素扩展为2x2的小格子
+
       uint8_t expandedPixel = (pixel << 4) | pixel;
 
-      // 写入目标数组
+
       dest[y * 2 * destPitch + 2 * x] = expandedPixel;
       dest[y * 2 * destPitch + 2 * x + 1] = expandedPixel;
       dest[(y * 2 + 1) * destPitch + 2 * x] = expandedPixel;
@@ -833,7 +779,7 @@ void sprintfBinary(uint8_t num, char *buf)
   }
 }
 
-// eggfly
+
 void enlargeBuffer(uint8_t *src, uint8_t *dest)
 {
   memset(dest, 0, DEST_WIDTH * DEST_HEIGHT / 8);
@@ -866,20 +812,7 @@ void enlargeBuffer(uint8_t *src, uint8_t *dest)
         dest[dest_offset_1] |= (pixel << (7 - dest_x1 % 8));
         dest[dest_offset_2] |= (pixel << (7 - dest_x2 % 8));
         dest[dest_offset_3] |= (pixel << (7 - dest_x3 % 8));
-        //        if (times % 10 == 0) {
-        //          if (pixel) {
-        //            char buf1[12];
-        //            sprintfBinary(dest[dest_offset_0], buf1);
-        //            char buf2[12];
-        //            sprintfBinary(dest[dest_offset_1], buf2);
-        //            char srcByteBuf[12];
-        //            sprintfBinary(srcByte, srcByteBuf);
-        //            Serial.printf("%d,%d=%d,src_byte[%d]=%s,dest->(%d,%d)(%d,%d),dest[%d]=%s,dest[%d]=%s\n",
-        //                          src_x, src_y, pixel, src_offset, srcByteBuf,
-        //                          dest_x0, dest_y0, dest_x1, dest_y1,
-        //                          dest_offset_0, buf1, dest_offset_1, buf2);
-        //          }
-        //        }
+# 883 "/Users/eggfly/github/eggfly/pepper-deck/PlatformIO/WenQuXing_NC1020_Emulator/src/WenQuXing_NC1020_Emulator.ino"
       }
     }
   }
@@ -905,7 +838,7 @@ void magnify_pixels(uint8_t *src, uint8_t *dest)
 
 void my_lcd_zoom_in(uint8_t *src, uint8_t *dest)
 {
-  // auto t = millis();
+
   for (size_t x = 0; x < 160; x++)
   {
     for (size_t y = 0; y < 80; y++)
@@ -927,11 +860,11 @@ void my_lcd_zoom_in(uint8_t *src, uint8_t *dest)
       dest[dest_offset_3 + 1] = v2;
     }
   }
-  // cost 7 ms
-  // Serial.printf("zoom cost: %dms\n", millis() - t);
+
+
 }
 
-// Twice for more functions
+
 uint8_t func_keys[] = {
     8,
     8,
@@ -973,27 +906,27 @@ inline void drawMouse()
   }
   int16_t mouse_x = mouse_hid_report.pos_x;
   int16_t mouse_y = mouse_hid_report.pos_y;
-  // canvas.fillRect(mouse_x, mouse_y, 5, 5, RGB565(0xFF, 0xFF, 0xFF));
+
   canvas.drawXBitmap(mouse_x, mouse_y, mouse_xbm, mouse_xbm_width, mouse_xbm_height, RGB565_WHITE);
 }
 inline void nc1020_loop()
 {
   auto start_time = millis();
-  size_t slice = 20; // origin is 20, can be 10, 15
+  size_t slice = 20;
   wqx::RunTimeSlice(slice, false);
   if (LOG_LEVEL <= LOG_LEVEL_VERBOSE)
   {
     Serial.printf("slice=%d,cost=%dms\n", slice, millis() - start_time);
   }
-  // }
+
   wqx::CopyLcdBuffer((uint8_t *)lcd_buff);
-  // memset(lcd_buff_ex, 0xf0, sizeof(lcd_buff_ex));
+
   enlargeBuffer(lcd_buff, lcd_buff_expanded);
-  // M5.Lcd.drawBitmap(80, 80, 160, 80, (uint8_t*)lcd_buff_ex);
-  // canvas.fillRect(0, (172 - 160) / 2, 320, 160, WQX_COLOR_RGB565_BG);
-  // canvas.fillScreen(RGB888_TO_RGB565(0x20, 0x20, 0x20));
+
+
+
   canvas.fillScreen(RGB565_BLACK);
-  // canvas.fillScreen(RGB565_WHITE);
+
   canvas.drawBitmap(
       0,
       (240 - 160) / 2,
@@ -1002,10 +935,10 @@ inline void nc1020_loop()
   canvas.setTextSize(2);
   canvas.setTextColor(RGB565_RED);
   canvas.printf("BATTERY %.4fV %.3f%%\n", battery_gauge.voltage, battery_gauge.percent);
-  // canvas.setTextColor(RGB565_CYAN);
+
   canvas.setCursor(2, 20);
   canvas.printf("HIGH VOLTAGE BATTERY\n");
-  // canvas.drawBitmap(0, 0, lcd_buff, 160, 80, WQX_COLOR_RGB565_FG, WQX_COLOR_RGB565_BG);
+
 
   if (key_to_release > 0)
   {
@@ -1022,7 +955,7 @@ inline void nc1020_loop()
   }
   else
   {
-    // char key = 0;
+
     if (ruler_deck::pressed_key.length() > 0)
     {
       int keycode = 0;
@@ -1039,7 +972,7 @@ inline void nc1020_loop()
       wqx::SetKey(keycode, true);
       key_to_release = keycode;
       key_release_countdown = 1;
-      // Serial.printf("BtnA, idx=%d\n", curr_key_index);
+
       curr_key_index++;
       curr_key_index %= func_key_size;
     }
@@ -1058,7 +991,7 @@ void loop()
   Serial.print("Chip ID: ");
   Serial.println(chipId);
   auto lastUpdate = millis();
-  // delay(3000);
+
   for (;;)
   {
     auto currTime = millis();
@@ -1068,13 +1001,13 @@ void loop()
     {
       lastUpdate = currTime;
       battery_loop();
-      // Serial.printf("loop cost: %dms\n", millis() - start_time);
+
     }
 
-    // grub_loader_menu();
-    // nc1020_loop();
-    // gfx_demo();
-    // delay(100);
+
+
+
+
   }
 }
 
@@ -1095,7 +1028,7 @@ void show_restart()
   canvas.setTextSize(2);
   canvas.println("---- - RESTART NOW ! ---- -");
   portEXIT_CRITICAL(&my_mutex);
-  // delay(2000);
+
 }
 
 void select_boot_item(int8_t offset)
