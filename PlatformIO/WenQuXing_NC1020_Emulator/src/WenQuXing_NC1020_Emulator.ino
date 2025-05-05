@@ -25,6 +25,7 @@
 
 #include "app.h"
 #include "battery_gauge.h"
+#include "touch_ft6336.h"
 #include "usb_host_hid.h"
 
 portMUX_TYPE my_mutex = portMUX_INITIALIZER_UNLOCKED;
@@ -597,7 +598,9 @@ public:
   {
     auto start_time = millis();
     nc1020_loop();
-    drawMouse();
+    touch_panel_loop();
+    draw_mouse();
+    draw_touch_panel();
     canvas.flush();
     if (LOG_LEVEL <= LOG_LEVEL_VERBOSE)
     {
@@ -629,6 +632,7 @@ void setup()
 
   initScreen();
   keyboard_setup();
+  touch_panel_setup();
   battery_setup();
   // initScreenWaves();
   menu_pages[0] = new ConsolePage();
@@ -953,7 +957,34 @@ int curr_key_index = 0;
 int key_release_countdown = 0;
 int key_to_release = -1;
 
-inline void drawMouse()
+inline void draw_cross_mark(int16_t x, int16_t y, uint16_t color)
+{
+  uint16_t size = 320;
+  canvas.drawLine(x - size, y, x + size, y, color);
+  canvas.drawLine(x, y - size, x, y + size, color);
+}
+
+inline void draw_touch_panel()
+{
+  if (tp.touch_count <= 0 || tp.touch_count > 2)
+  {
+    return;
+  }
+  if (tp.touch_count >= 1)
+  {
+    int16_t tp_y = DISPLAY_HEIGHT - tp.tp[0].x;
+    int16_t tp_x = tp.tp[0].y;
+    draw_cross_mark(tp_x, tp_y, RGB565_MAGENTA);
+  }
+  if (tp.touch_count == 2)
+  {
+    int16_t tp_y = DISPLAY_HEIGHT - tp.tp[1].x;
+    int16_t tp_x = tp.tp[1].y;
+    draw_cross_mark(tp_x, tp_y, RGB565_ORANGE);
+  }
+}
+
+inline void draw_mouse()
 {
   if (mouse_hid_report.pos_x < 0)
   {
@@ -976,14 +1007,15 @@ inline void drawMouse()
   // canvas.fillRect(mouse_x, mouse_y, 5, 5, RGB565(0xFF, 0xFF, 0xFF));
   canvas.drawXBitmap(mouse_x, mouse_y, mouse_xbm, mouse_xbm_width, mouse_xbm_height, RGB565_WHITE);
 }
+
 inline void nc1020_loop()
 {
-  auto start_time = millis();
-  size_t slice = 20; // origin is 20, can be 10, 15
+  auto start_time = micros();
+  size_t slice = 50; // origin is 20, can be 10, 15
   wqx::RunTimeSlice(slice, false);
   if (LOG_LEVEL <= LOG_LEVEL_VERBOSE)
   {
-    Serial.printf("slice=%d,cost=%dms\n", slice, millis() - start_time);
+    Serial.printf("slice=%d,cost=%dus\n", slice, micros() - start_time);
   }
   // }
   wqx::CopyLcdBuffer((uint8_t *)lcd_buff);
@@ -1025,6 +1057,10 @@ inline void nc1020_loop()
     // char key = 0;
     if (ruler_deck::pressed_key.length() > 0)
     {
+      canvas.setCursor(40, 208);
+      canvas.setTextSize(3);
+      canvas.setTextColor(RGB565_GREEN);
+      canvas.printf("KEY: %s\n", ruler_deck::pressed_key.c_str());
       int keycode = 0;
       if (nc1020_keymap.find(ruler_deck::pressed_key) != nc1020_keymap.end())
       {

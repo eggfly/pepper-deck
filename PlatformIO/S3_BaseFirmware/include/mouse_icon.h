@@ -1,0 +1,58 @@
+#pragma once
+#include <stdint.h>
+#include <Arduino.h>
+
+// PROGMEM uint8_t mouse_icon[12 * 19 / 8] = {
+//     0b11110000,
+//     0b11110000,
+//     0b00001111,
+//     0b00001111,
+//     0b11001100,
+//     0b11001100,
+//     0b00110011,
+//     0b00110011,
+// };
+
+#define mouse_xbm_width 12
+#define mouse_xbm_height 19
+
+PROGMEM uint8_t mouse_xbm[] = {
+    0x01,
+    0x00,
+    0x03,
+    0x00,
+    0x05,
+    0x00,
+    0x09,
+    0x00,
+    0x11,
+    0x00,
+    0x21,
+    0x00,
+    0x41,
+    0x00,
+    0x81,
+    0x00,
+    0x01,
+    0x01,
+    0x01,
+    0x02,
+    0x01,
+    0x04,
+    0x01,
+    0x08,
+    0x81,
+    0x0F,
+    0x91,
+    0x00,
+    0x29,
+    0x01,
+    0x25,
+    0x01,
+    0x43,
+    0x02,
+    0x40,
+    0x02,
+    0x80,
+    0x01,
+};

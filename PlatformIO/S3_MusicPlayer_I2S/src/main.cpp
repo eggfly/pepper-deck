@@ -53,7 +53,7 @@ void setup()
        //
        // /* 渡口 */ http://42.193.120.65:8002/%E8%94%A1%E7%90%B4%20-%20%E6%B8%A1%E5%8F%A3.mp3
        audio.connecttoFS(SD_MMC, "/server/逃跑计划-阳光照进回忆里.mp3");
-       audio.setVolume(6);
+       audio.setVolume(8);
        auto vol = audio.getVolume();
        Serial.println(vol);
 }

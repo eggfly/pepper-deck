@@ -1,0 +1,21 @@
+# ESP-IDF Partition Table
+# Name, Type, SubType, Offset, Size, Flags
+nvs,data,nvs,0x9000,16K,
+otadata,data,ota,0xd000,0x2000,
+phy_init,data,phy,0xf000,4K,
+model,data,spiffs,0x10000,960K,
+ota_0,app,ota_0,0x100000,3584K,
+ota_1,app,ota_1,0x480000,3584K,
+
+# coredump,data,coredump,0x100000,0x2f00000
+# coredump,data,coredump,0x800000,0x2800000
+# coredump offset = 8MB, size = 40MB
+# 0xe90000 ok, 0x1000000 not ok
+# 0xef0000 提示 invalid segment length
+# 0xea0000 E (263) esp_image: invalid segment length 0xffffffff
+ota_2,app,ota_2,0x800000,8192K,
+
+# 用ota15不行 set_boot返回invalid arg
+# ota_2 offset = 48MB, size = 3.5MB
+
+coredump,data,coredump,,0x10000

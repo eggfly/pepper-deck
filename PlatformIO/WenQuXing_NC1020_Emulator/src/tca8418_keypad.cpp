@@ -27,7 +27,7 @@ const char *keymap[DATA_ROWS][COLS] = {
     {"A", "S", "D", "F", "G", "H", "J", "K", "L", "Backspace"},
     {"Z", "X", "C", "V", "B", "N", "M", "PgUp", "Up", "PgDn"},
     {"Help", "Shift", "CapsLock", "Esc", "Sym", ".", "Space", "Left", "Down", "Right"},
-    {"1", "2", "3", "4", "5", "6", "7", "8", "9", "0"},
+    {"GameUp", "GameDown", "GameLeft", "GameRight", "", "", "", "", "", ""},
 };
 
 const char *navButtons[9] = {
@@ -117,7 +117,7 @@ void keyboard_loop()
     }
     else if (row == 7)
     {
-      keyStr = "8 Direction Nav Buttons";
+      keyStr = navButtons[col];
     }
     else
     {

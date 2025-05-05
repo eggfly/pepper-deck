@@ -6,13 +6,17 @@
 #define I2C_SDA 17
 #define I2C_SCL 18
 
+
+#define TP_RST_PIN 3
+#define TP_INT_PIN 38
+
 #define MY_SD SD_MMC
 
 #define LOG_LEVEL_VERBOSE 0
 #define LOG_LEVEL_DEBUG 1
 #define LOG_LEVEL_INFO 2
 
-#define LOG_LEVEL LOG_LEVEL_INFO
+#define LOG_LEVEL LOG_LEVEL_VERBOSE
 
 #define RGB888_TO_RGB565(r, g, b) \
     ((((r >> 3) & 0x1F) << 11) | \
